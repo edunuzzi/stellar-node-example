@@ -1,0 +1,82 @@
+version: '3'
+
+services:
+  db:
+    image: swipetech/stellar-postgres
+    ports:
+    - '5433:5432'
+    environment:
+      POSTGRES_USER: 'postgres'
+      STELLAR_DB_USER: 'stellar'
+      STELLAR_DB_PASSWORD: 'password'
+
+  core:
+    image: swipetech/stellar-core
+    ports:
+    - '11625:11625'
+    - '11626:11626'
+    depends_on:
+    - db
+    volumes:
+    - ./data:/data
+    environment:
+      FORCE_SCP: "true"
+      DB_USER: "stellar"
+      DB_PASS: "password"
+      DB_NAME: "core"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      PUBLIC_HTTP_PORT: "true"
+      KNOWN_CURSORS: "HORIZON"
+      DATA_DIR: "/data"
+      NETWORK_PASSPHRASE: "My Private Network ; January 2019"
+      NODE_SEED: "SCWEI4M3A4EMXM7ESYDSCYXHHBF625MPMJFSUDWGEU2EVFLOUJCACVIC"
+      RUN_STANDALONE: "true"
+      NODE_IS_VALIDATOR: "true"
+      DATABASE: 'postgresql://dbname=core host=db port=5432 user=stellar password=password'
+      UNSAFE_QUORUM: "true"
+      FAILURE_SAFETY: "0"
+      LOG_FILE_PATH: "" # Sends logs to stdout
+      COMMANDS: "ll?level=debug"
+      QUORUM_SET: >
+        [
+          {
+            "threshold_percent": 100,
+            "validators": ["GCBQ7NAX34VN32QMOEORTBRPYZJJYU3VE75XGDO4JRY4YV4HY2FUPQ73"]
+          }
+        ]
+
+      HISTORY: >
+        {
+          "h1": {
+            "get": "cp /tmp/stellar-core/history/vs/{0} {1}",
+            "put": "cp {0} /tmp/stellar-core/history/vs/{1}",
+            "mkdir": "mkdir -p /tmp/stellar-core/history/vs/{0}"
+          }
+        }
+
+  horizon:
+    image: swipetech/stellar-horizon
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+      - core
+    volumes:
+    - ./data:/data
+    environment:
+      DB_USER: "stellar"
+      DB_PASS: "password"
+      DB_NAME: "horizon"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DATA_DIR: "/data"
+      HISTORY_RETENTION_COUNT: "100000"
+      PORT: "8000"
+      DATABASE_URL: "postgres://stellar:password@db:5432/horizon?sslmode=disable"
+      STELLAR_CORE_DATABASE_URL: "postgres://stellar:password@db:5432/core?sslmode=disable"
+      STELLAR_CORE_URL: "http://core:11626"
+      LOG_LEVEL: "info"
+      INGEST: "true"
+      PER_HOUR_RATE_LIMIT: "100000000"
+      NETWORK_PASSPHRASE: "My own private network ; January 2019"
