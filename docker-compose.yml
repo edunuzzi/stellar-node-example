@@ -37,7 +37,7 @@ services:
       UNSAFE_QUORUM: "true"
       FAILURE_SAFETY: "0"
       LOG_FILE_PATH: "" # Sends logs to stdout
-      COMMANDS: "ll?level=debug"
+      COMMANDS: "ll?level=info"
       QUORUM_SET: >
         [
           {
